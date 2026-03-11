@@ -15,7 +15,7 @@ RUN python -m pip install \
     --no-binary pydantic \
     -t ${PREFIX}/python
 
-ENV PYTHONPATH=${PYTHONPATH}:${PREFIX}/python
+ENV PYTHONPATH=${PREFIX}/python
 ENV PATH=${PREFIX}/python/bin:${PATH}
 
-ENTRYPOINT ["bash", "./create-lambda-layer.sh"]
+ENTRYPOINT ["bash"]
