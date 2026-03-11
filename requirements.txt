@@ -1,5 +1,4 @@
-titiler.application==0.22.4
-mangum
+titiler.pgstac
 requests
 pyyaml
 jinja2

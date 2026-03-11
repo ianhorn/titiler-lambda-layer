@@ -3,7 +3,7 @@ echo "-----------------------"
 echo "Creating lambda layer"
 echo "-----------------------"
 
-#dnf install -y zip binutils
+dnf install -y zip binutils
 
 echo "Remove lambda python packages"
 rm -rdf $PREFIX/python/boto3* \
@@ -28,4 +28,4 @@ cp /usr/lib64/libexpat.so.1 $PREFIX/lib/
 echo "Create archives"
 cd $PREFIX && zip -r9q /tmp/package.zip python && zip -r9q /tmp/package.zip lib
 
-cp /tmp/package.zip /local/package.zip
+cp /tmp/package.zip /local/package.zip 
