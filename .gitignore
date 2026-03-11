@@ -9,3 +9,4 @@ local
 .DS_Store
 
 build.sh
+titiler-pgstac-template.yaml

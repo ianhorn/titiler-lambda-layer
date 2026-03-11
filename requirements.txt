@@ -2,3 +2,4 @@ titiler.pgstac
 requests
 pyyaml
 jinja2
+mangum
