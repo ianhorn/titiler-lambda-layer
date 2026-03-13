@@ -6,4 +6,4 @@ PYTHON_VERSION=$1
 docker build \
     --platform linux/amd64 \
     --build-arg PYTHON_VERSION=${PYTHON_VERSION} \
-    -t ianhorn/titiler-pgstac-layer:${LATEST} .
+    -t ianhorn/titiler-pgstac-layer:latest .

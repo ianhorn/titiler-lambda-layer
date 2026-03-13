@@ -1,5 +1,5 @@
 ARG PYTHON_VERSION=3.14
-FROM public.ecr.aws/lambda/python:${PYTHON_VERSION}
+FROM public.ecr.aws/lambda/python:3.14
 
 ENV PREFIX=/opt
 RUN mkdir ${PREFIX}/python
