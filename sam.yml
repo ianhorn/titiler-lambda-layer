@@ -1,102 +1,125 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-
 Parameters:
   Bucket:
     Type: CommaDelimitedList
-    Default: "*"
-
+    Default: '*'
   DisableCOG:
     Type: String
-    Default: "false"
+    Default: 'false'
     AllowedValues:
-      - "true"
-      - "false"
-
+    - 'true'
+    - 'false'
   DisableMosaic:
     Type: String
-    Default: "true"
+    Default: 'true'
     AllowedValues:
-      - "true"
-      - "false"
-
+    - 'true'
+    - 'false'
   DisableSTAC:
     Type: String
-    Default: "true"
+    Default: 'true'
     AllowedValues:
-      - "true"
-      - "false"
-
+    - 'true'
+    - 'false'
+  PGHost:
+    Type: String
+    Description: PostgreSQL host
+  PGPort:
+    Type: Number
+    Default: 5432
+    Description: PostgreSQL port
+  PGDatabase:
+    Type: String
+    Description: PostgreSQL database name
+  PGUser:
+    Type: String
+    Description: PgSTAC user
+  PGPassword:
+    Type: String
+    NoEcho: true
+    Description: PgStAC password
   LayerVersion:
     Type: String
-    Default: 17
-
+    Default: 2
 Resources:
   TiTiler:
     Type: AWS::Serverless::Function
     Properties:
-      Runtime: python3.12
+      Runtime: python3.14
       Handler: index.handler
       Description: 'Titiler: Dynamic tiler'
       Layers:
-        - !Sub arn:aws:lambda:${AWS::Region}:552819999234:layer:titiler:${LayerVersion}
-
+      - Fn::Sub: arn:aws:lambda:us-west-2:405369522825:layer:titiler-pgstac:${LayerVersion}
       InlineCode: |
         import logging
         from mangum import Mangum
-        from titiler.application.main import app
+        from titiler.pgstac.main import app
 
         logging.getLogger("mangum.lifespan").setLevel(logging.ERROR)
         logging.getLogger("mangum.http").setLevel(logging.ERROR)
 
         handler = Mangum(app, lifespan="auto")
-
       MemorySize: 1024
       Timeout: 10
       Policies:
-        - AWSLambdaExecute # Managed Policy
-        - Version: '2012-10-17' # Policy Document
-          Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetObject
-                - s3:HeadObject
-              Resource:
-                !Split
-                  - ','
-                  - !Join
-                      - ''
-                      - - 'arn:aws:s3:::'
-                        - !Join
-                            - '/*,arn:aws:s3:::'
-                            - !Ref Bucket
-                        - '/*'
-
+      - AWSLambdaExecute
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:HeadObject
+          Resource:
+            Fn::Split:
+            - ','
+            - Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - Fn::Join:
+                  - '/*,arn:aws:s3:::'
+                  - Ref: Bucket
+                - /*
       Environment:
         Variables:
-          CPL_VSIL_CURL_ALLOWED_EXTENSIONS: '.tif,.TIF,.tiff'
+          CPL_VSIL_CURL_ALLOWED_EXTENSIONS: .tif,.TIF,.tiff
           GDAL_CACHEMAX: 200
           GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
-          GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: YES
-          GDAL_HTTP_MULTIPLEX: YES
+          GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: true
+          GDAL_HTTP_MULTIPLEX: true
           GDAL_HTTP_VERSION: 2
-          VSI_CACHE: TRUE
+          VSI_CACHE: true
           VSI_CACHE_SIZE: 536870912
           CPL_VSIL_CURL_CACHE_SIZE: 200000000
           GDAL_INGESTED_BYTES_AT_OPEN: 32768
-          TITILER_API_DISABLE_COG: !Ref DisableCOG
-          TITILER_API_DISABLE_STAC: !Ref DisableSTAC
-          TITILER_API_DISABLE_MOSAIC: !Ref DisableMosaic
-
+          MOSAIC_CONCURRENCY: 5
+          TITILER_API_DISABLE_COG:
+            Ref: DisableCOG
+          TITILER_API_DISABLE_STAC:
+            Ref: DisableSTAC
+          TITILER_API_DISABLE_MOSAIC:
+            Ref: DisableMosaic
+          TITITLER_PGHOST: 
+            Ref: PGHost
+          TITILER_PGDATABASE:
+            Ref: PGDatabase
+          TITILER_PGPORT:
+            Ref: PGPort
+          TITILER_PGUSER:
+            Ref: PGUser
+          TITILER_PGPASSWORD:
+            Ref: PGPassword
       Events:
         API:
           Type: HttpApi
-
 Outputs:
   LambdaFunc:
     Description: Lambda Fucntion ARN
-    Value: !GetAtt TiTiler.Arn
-
+    Value:
+      Fn::GetAtt:
+      - TiTiler
+      - Arn
   Api:
-    Description: "Endpoint URL"
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
+    Description: Endpoint URL
+    Value:
+      Fn::Sub: https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/
